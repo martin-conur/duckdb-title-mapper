@@ -1,5 +1,5 @@
 [package]
-name = "rusty_quack"
+name = "standarize_title"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,11 +15,24 @@ strip = true
 # src/wasm_lib.rs forwards to src/lib.rs so that we can change from cdylib
 # (that is needed while compiling natively) to staticlib (needed since the
 # actual linking will be done via emcc
-name = "rusty_quack"
+name = "standarize_title"
 path = "src/wasm_lib.rs"
 crate-type = ["staticlib"]
 
 [dependencies]
-duckdb = { version = "1.2.1", features = ["vtab-loadable"] }
+bincode = "1.3.3"
+dashmap = "6.1.0"
+duckdb = { version = "1.2.1", features = [
+    "vscalar",
+    "vscalar-arrow",
+    "vtab-arrow"
+] }
 duckdb-loadable-macros = "0.1.5"
 libduckdb-sys = { version = "1.2.1", features = ["loadable-extension"] }
+ndarray = "0.16.1"
+rayon = "1.10.0"
+regex = "1.11.1"
+rust-stemmers = "1.2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.140"
+sprs = "0.11.3"
