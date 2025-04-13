@@ -1,13 +1,11 @@
-# DuckDB Rust extension template
-This is an **experimental** template for Rust based extensions based on the C Extension API of DuckDB. The goal is to 
-turn this eventually into a stable basis for pure-Rust DuckDB extensions that can be submitted to the Community extensions
-repository
+# DuckDB Title Mapper
 
-Features:
-- No DuckDB build required
-- No C++ or C code required
-- CI/CD chain preconfigured
-- (Coming soon) Works with community extensions
+`duckdb-title-mapper` is a highly optimized DuckDB extension written in Rust. It standardizes scraped job titles to BLS (Bureau of Labor Statistics) standard titles using a fast TF-IDF implementation.
+
+## Features
+- **Rust-based**: Built entirely in Rust for performance and safety.
+- **Optimized**: Uses fast TF-IDF for efficient title standardization.
+- **DuckDB Integration**: Seamlessly integrates as a DuckDB extension.
 
 ## Cloning
 
@@ -31,63 +29,95 @@ Installing these dependencies will vary per platform:
 - For MacOS, [homebrew](https://formulae.brew.sh/).
 - For Windows, [chocolatey](https://community.chocolatey.org/).
 
-## Building
-After installing the dependencies, building is a two-step process. Firstly run:
-```shell
-make configure
-```
-This will ensure a Python venv is set up with DuckDB and DuckDB's test runner installed. Additionally, depending on configuration,
-DuckDB will be used to determine the correct platform for which you are compiling.
+## Building the Extension
 
-Then, to build the extension run:
-```shell
-make debug
-```
-This delegates the build process to cargo, which will produce a shared library in `target/debug/<shared_lib_name>`. After this step, 
-a script is run to transform the shared library into a loadable extension by appending a binary footer. The resulting extension is written
-to the `build/debug` directory.
+To build the extension, ensure you have the following dependencies installed:
+- Python3
+- Python3-venv
+- [Make](https://www.gnu.org/software/make)
+- Git
 
-To create optimized release binaries, simply run `make release` instead.
+### Steps to Build
 
-## Testing
-This extension uses the DuckDB Python client for testing. This should be automatically installed in the `make configure` step.
-The tests themselves are written in the SQLLogicTest format, just like most of DuckDB's tests. A sample test can be found in
-`test/sql/<extension_name>.test`. To run the tests using the *debug* build:
+1. **Configure the Environment**:
+   ```shell
+   make configure
+   ```
+   This sets up a Python virtual environment with DuckDB and its test runner installed. It also determines the correct platform for compilation.
 
-```shell
-make test_debug
-```
+2. **Build the Extension**:
+   - For a debug build:
+     ```shell
+     make debug
+     ```
+     This produces a shared library in `target/debug/<shared_lib_name>` and transforms it into a loadable DuckDB extension in the `build/debug` directory.
 
-or for the *release* build:
-```shell
-make test_release
-```
+   - For a release build:
+     ```shell
+     make release
+     ```
+     This creates an optimized release binary in the `build/release` directory.
 
-### Version switching 
-Testing with different DuckDB versions is really simple:
+## Testing the Extension
 
-First, run 
-```
-make clean_all
-```
-to ensure the previous `make configure` step is deleted.
+This extension uses the DuckDB Python client for testing. The tests are written in the SQLLogicTest format.
 
-Then, run 
-```
-DUCKDB_TEST_VERSION=v1.1.2 make configure
-```
-to select a different duckdb version to test with
+- To test the debug build:
+  ```shell
+  make test_debug
+  ```
 
-Finally, build and test with 
-```
-make debug
-make test_debug
-```
+- To test the release build:
+  ```shell
+  make test_release
+  ```
 
-### Known issues
-This is a bit of a footgun, but the extensions produced by this template may (or may not) be broken on windows on python3.11 
-with the following error on extension load:
+## Using the Extension in DuckDB
+
+Once the extension is built, you can load it into DuckDB as follows:
+
+1. Start DuckDB:
+   ```shell
+   duckdb
+   ```
+
+2. Load the extension:
+   ```sql
+   LOAD 'build/release/standarize_title.duckdb_extension';
+   ```
+
+3. Use the extension to standardize job titles:
+   ```sql
+   SELECT standardize_title(scraped_title_column) FROM your_table;
+   ```
+
+## Version Switching
+
+To test with a different DuckDB version:
+
+1. Clean the previous configuration:
+   ```shell
+   make clean_all
+   ```
+
+2. Configure with the desired DuckDB version:
+   ```shell
+   DUCKDB_TEST_VERSION=v1.1.2 make configure
+   ```
+
+3. Build and test:
+   ```shell
+   make debug
+   make test_debug
+   ```
+
+## Known Issues
+
+On Windows with Python 3.11, the extension may fail to load with the following error:
 ```shell
 IO Error: Extension '<name>.duckdb_extension' could not be loaded: The specified module could not be found
 ```
-This was resolved by using python 3.12
+This issue is resolved by using Python 3.12.
+
+---
+This extension is designed to make job title standardization fast and efficient. Let us know if you encounter any issues or have suggestions for improvement!

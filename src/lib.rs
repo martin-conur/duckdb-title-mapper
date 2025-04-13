@@ -17,8 +17,7 @@ use libduckdb_sys::{
 };
 use duckdb::core::Inserter;
 use duckdb::ffi;
-use std::{borrow::Cow, slice};
-use rust_stemmers::{Algorithm, Stemmer};
+use std::slice;
 struct StandarizeTitles;
 
 mod utils;

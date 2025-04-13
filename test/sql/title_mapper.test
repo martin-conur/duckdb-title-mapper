@@ -1,0 +1,40 @@
+# name: test/sql/title_mapper.test
+# description: test duckdb-title-mapper extension
+# group: [quack]
+
+# Before we load the extension, this will fail
+statement error
+SELECT standarize_title('software engineer');
+----
+Catalog Error: Scalar Function with name standarize_title does not exist!
+
+# Require statement will ensure the extension is loaded from now on
+require standarize_title
+
+require icu
+
+# Confirm the extension works
+query I
+SELECT standarize_title('robotics engineer');
+----
+Robotics Engineer - Engineers, All Other
+
+query I
+SELECT standarize_title('digital strategist');
+----
+Data Strategist - Data Scientists
+
+query I
+SELECT standarize_title('poet');
+----
+Poet - Writers and Authors
+
+query I
+SELECT standarize_title('author');
+----
+Author - Writers and Editors
+
+query I
+SELECT standarize_title('biologist');
+----
+Biologist - Biological Scientists, All Other

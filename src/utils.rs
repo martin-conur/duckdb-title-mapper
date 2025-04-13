@@ -1,7 +1,7 @@
 use regex::Regex;
 use rayon::prelude::*;
 use rust_stemmers::{Algorithm, Stemmer};
-use sprs::TriMat;
+use sprs::{CsIter, CsMat, CsVec, TriMat};
 use ndarray::{Array2, Axis};
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
@@ -11,13 +11,17 @@ use serde_json::Value;
 use bincode;
 use std::fs::File;
 use std::io::{Read, Write};
+use once_cell::sync::Lazy;
+
+static TOKENIZER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\w+").unwrap());
+static STEMMER: Lazy<Stemmer> = Lazy::new(|| Stemmer::create(Algorithm::English));
 
 #[derive(Serialize, Deserialize)]
 struct TfidfIndex {
     term_to_idx: HashMap<String, usize>,
     doc_freq: HashMap<String, usize>,
     num_docs: usize,
-    matrix: Vec<Vec<f64>>,
+    matrix: CsMat<f64>,
 }
 
 pub fn load_standarized_values() -> Vec<String> {
@@ -37,17 +41,25 @@ pub fn get_standardized_titles() -> Vec<String> {
 }
 
 fn tokenize(text: &str) -> Vec<String> {
-    let re = Regex::new(r"\w+").unwrap();
-    re.find_iter(text)
+    TOKENIZER_RE.find_iter(text)
         .map(|m| m.as_str().to_lowercase())
         .collect()
 }
 
 fn stem_tokens(tokens: &[String]) -> Vec<String> {
-    let stemmer = Stemmer::create(Algorithm::English);
     tokens.iter()
-        .map(|word| stemmer.stem(word).to_string())
+        .map(|word| STEMMER.stem(word).to_string())
         .collect()
+}
+
+fn cosine_similarity_sparse(a: &CsVec<f64>, b: &CsVec<f64>, doc_norms: f64) -> f64 {
+    let dot = a.dot(b);
+    let norm_a = a.dot(a).sqrt();
+    if norm_a > 0.0 && doc_norms > 0.0 {
+        dot / (doc_norms * norm_a)
+    } else {
+        0.0
+    }
 }
 
 fn build_tfidf_index(docs: &[String]) -> TfidfIndex {
@@ -78,7 +90,7 @@ fn compute_tfidf_matrix(
     term_to_idx: &HashMap<String, usize>,
     doc_freq: &HashMap<String, usize>,
     num_docs: usize,
-) -> Vec<Vec<f64>> {
+) -> CsMat<f64> {
     let num_terms = term_to_idx.len();
     let matrix_mutex = Mutex::new(TriMat::new((stemmed_docs.len(), num_terms)));
 
@@ -106,36 +118,6 @@ fn compute_tfidf_matrix(
     let csr_matrix = matrix_mutex.into_inner().unwrap().to_csr::<usize>();
 
     csr_matrix
-        .outer_iterator()
-        .map(|row| {
-            let mut vec = vec![0.0; num_terms];
-            for (idx, &value) in row.iter() {
-                vec[idx] = value;
-            }
-            vec
-        })
-        .collect()
-}
-
-fn cosine_similarity(vec1: Vec<Vec<f64>>, vec2: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
-    let mat1 = Array2::from_shape_vec((vec1.len(), vec1[0].len()), vec1.into_iter().flatten().collect()).unwrap();
-    let mat2 = Array2::from_shape_vec((vec2.len(), vec2[0].len()), vec2.into_iter().flatten().collect()).unwrap();
-
-    let norm_mat1: Vec<f64> = mat1.axis_iter(Axis(0)).map(|row| row.mapv(|x| x.powi(2)).sum().sqrt()).collect();
-    let norm_mat2: Vec<f64> = mat2.axis_iter(Axis(0)).map(|row| row.mapv(|x| x.powi(2)).sum().sqrt()).collect();
-
-    let similarity = mat1.dot(&mat2.t());
-
-    similarity.outer_iter().enumerate().map(|(i, row)| {
-        row.iter().enumerate().map(|(j, &val)| {
-            let norm_product = norm_mat1[i] * norm_mat2[j];
-            if norm_product > 0.0 {
-                val / norm_product
-            } else {
-                0.0
-            }
-        }).collect()
-    }).collect()
 }
 
 pub fn tame_logic(scraped_titles: Vec<String>) -> HashMap<String, String> {
@@ -162,18 +144,31 @@ pub fn tame_logic(scraped_titles: Vec<String>) -> HashMap<String, String> {
         &tfidf_index.doc_freq,
         tfidf_index.num_docs,
     );
+    let query_vecs: Vec<CsVec<f64>> = new_tfidf_matrix.outer_iterator()
+    .map(|row| row.to_owned())
+    .collect();
 
-    let sim_vecs = cosine_similarity(new_tfidf_matrix, tfidf_index.matrix);
+    let doc_vecs: Vec<CsVec<f64>> = tfidf_index.matrix.outer_iterator()
+        .map(|row| row.to_owned())
+        .collect();
 
-    let best_matches = DashMap::new();
-    scraped_titles.par_iter().enumerate().for_each(|(i, doc1)| {
-        if let Some((best_idx, _)) = sim_vecs[i]
-            .iter()
-            .enumerate()
-            .max_by(|(_, sim1), (_, sim2)| sim1.partial_cmp(sim2).unwrap_or(std::cmp::Ordering::Equal))
-        {
-            best_matches.insert(doc1.clone(), standard_titles[best_idx].clone());
+    let doc_norms: Vec<f64> =doc_vecs.iter().map(|v| v.dot(v).sqrt()).collect();
+
+     let best_matches = DashMap::new();
+    
+    query_vecs.into_par_iter().enumerate().for_each(|(i, query_vec)| {
+        let mut best_score = -0.0f64;
+        let mut best_index = 0;
+        for (j, doc_vec) in doc_vecs.iter().enumerate() {
+            let score = cosine_similarity_sparse(&query_vec, &doc_vec, doc_norms[j]);
+            if score > best_score {
+                best_score = score;
+                best_index = j;
+            }
+            
         }
+
+        best_matches.insert(scraped_titles[i].clone(), standard_titles[best_index].clone());
     });
 
     best_matches.into_iter().collect()
