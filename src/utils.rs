@@ -1,8 +1,7 @@
 use regex::Regex;
 use rayon::prelude::*;
 use rust_stemmers::{Algorithm, Stemmer};
-use sprs::{CsIter, CsMat, CsVec, TriMat};
-use ndarray::{Array2, Axis};
+use sprs::{CsMat, CsVec, TriMat};
 use std::collections::HashSet;
 use rustc_hash::FxHashMap;
 use std::sync::Mutex;
@@ -137,39 +136,59 @@ pub fn tame_logic(scraped_titles: Vec<String>) -> FxHashMap<String, String> {
 
     let tokenized_stemmed: Vec<Vec<String>> = scraped_titles.par_iter().map(|doc| tokenize_and_stem(doc)).collect();
 
-    let new_tfidf_matrix = compute_tfidf_matrix(
-        &tokenized_stemmed,
-        &tfidf_index.term_to_idx,
-        &tfidf_index.doc_freq,
-        tfidf_index.num_docs,
-    );
-    let query_vecs: Vec<CsVec<f64>> = new_tfidf_matrix.outer_iterator()
-    .map(|row| row.to_owned())
-    .collect();
+    let best_matches: DashMap<String, String> = DashMap::new();
 
-    let doc_vecs: Vec<CsVec<f64>> = tfidf_index.matrix.outer_iterator()
+    let doc_vecs: Vec<CsVec<f64>> = tfidf_index.matrix
+        .outer_iterator()
         .map(|row| row.to_owned())
         .collect();
 
-    let doc_norms: Vec<f64> =doc_vecs.iter().map(|v| v.dot(v).sqrt()).collect();
+    let doc_norms: Vec<f64> = doc_vecs
+        .iter()
+        .map(|v| v.dot(v).sqrt())
+        .collect();
 
-     let best_matches = DashMap::new();
+    const CHUNK_SIZE: usize = 2_000;
     
-    query_vecs.par_chunks(2_000).for_each(|chunk| {
-            for (i, query_vec) in chunk.iter().enumerate() {
-            let mut best_score = -0.0f64;
-            let mut best_index = 0;
-            for (j, doc_vec) in doc_vecs.iter().enumerate() {
-                let score = cosine_similarity_sparse(&query_vec, &doc_vec, doc_norms[j]);
-                if score > best_score {
-                    best_score = score;
-                    best_index = j;
-                }
-                
-            }
+    tokenized_stemmed
+    .chunks(CHUNK_SIZE)
+    .enumerate()
+    .for_each(|(batch_idx, chunk)| {
+        let new_tfidf_matrix = compute_tfidf_matrix(
+            chunk,
+            &tfidf_index.term_to_idx,
+            &tfidf_index.doc_freq,
+            tfidf_index.num_docs,
+        );
 
-            best_matches.insert(scraped_titles[i].clone(), standard_titles[best_index].clone());
-        }
+        let query_vecs: Vec<CsVec<f64>> = new_tfidf_matrix
+            .outer_iterator()
+            .map(|row| row.to_owned())
+            .collect();
+
+        query_vecs
+            .par_iter()
+            .enumerate()
+            .for_each(|(i, query_vec)| {
+                let mut best_score = -0.0f64;
+                let mut best_index = 0;
+                for (j, doc_vec) in doc_vecs.iter().enumerate() {
+                    let score = cosine_similarity_sparse(query_vec, doc_vec, doc_norms[j]);
+                    if score > best_score {
+                        best_score = score;
+                        best_index = j;
+                    }
+                }
+
+                let global_idx = batch_idx * CHUNK_SIZE + i;
+
+                if global_idx < scraped_titles.len() && best_index < standard_titles.len() {
+                    best_matches.insert(
+                        scraped_titles[global_idx].clone(),
+                        standard_titles[best_index].clone(),
+                    );
+                }
+            });
     });
 
     best_matches.into_iter().collect()

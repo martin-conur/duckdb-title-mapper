@@ -52,7 +52,7 @@ impl VScalar for StandarizeTitles {
         // Extract the input word
         let input_vec = input.flat_vector(0);
         // slice of strings
-        let input_slice = input_vec.as_slice_with_len::<duckdb_string_t>(input.len() + 1);
+        let input_slice = input_vec.as_slice_with_len::<duckdb_string_t>(input.len());
         // a flat writable vector
         let output_flat = output.flat_vector();
 
@@ -61,7 +61,8 @@ impl VScalar for StandarizeTitles {
        let standarized_titles = tame_logic(input_strings.clone());
 
         for (i, input_string) in input_strings.iter().enumerate() {
-            let standard_title = standarized_titles[input_string].as_str();
+            let fallback = "None".to_string();
+            let standard_title = standarized_titles.get(input_string).unwrap_or(&fallback).as_str();
             let bls_title = standard_title_to_bls_title(standard_title);
             output_flat.insert(i, format!("{} - {}", standard_title, bls_title).as_str());
         }
