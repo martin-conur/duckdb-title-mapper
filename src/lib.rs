@@ -52,7 +52,7 @@ impl VScalar for StandarizeTitles {
         // Extract the input word
         let input_vec = input.flat_vector(0);
         // slice of strings
-        let input_slice = input_vec.as_slice_with_len::<duckdb_string_t>(input.len());
+        let input_slice = input_vec.as_slice_with_len::<duckdb_string_t>(input.len() + 1);
         // a flat writable vector
         let output_flat = output.flat_vector();
 
