@@ -78,11 +78,11 @@ impl VScalar for StandarizeTitles {
     }
 }
 
-const FUNCTION_NAME: &str = "standarize_title";
+const FUNCTION_NAME: &str = "standardize_title";
 
 #[duckdb_entrypoint_c_api]
 pub unsafe fn extension_entrypoint(con: Connection) -> Result<(), Box<dyn Error>> {
     con.register_scalar_function::<StandarizeTitles>(FUNCTION_NAME)
-        .expect("Failed to register standarize_title()");
+        .expect("Failed to register standardize_title()");
     Ok(())
 }

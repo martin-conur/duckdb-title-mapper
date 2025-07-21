@@ -1407,7 +1407,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "standarize_title"
+name = "standardize_title"
 version = "0.1.0"
 dependencies = [
  "bincode",

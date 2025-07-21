@@ -83,7 +83,7 @@ Once the extension is built, you can load it into DuckDB as follows:
 
 2. Load the extension:
    ```sql
-   LOAD 'build/release/standarize_title.duckdb_extension';
+   LOAD 'build/release/standardize_title.duckdb_extension';
    ```
 
 3. Use the extension to standardize job titles:

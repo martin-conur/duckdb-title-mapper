@@ -1,4 +1,4 @@
-load 'build/debug/standarize_title.duckdb_extension';
+load 'build/debug/standardize_title.duckdb_extension';
 
 create table job_titles (title text);
 
@@ -109,4 +109,4 @@ insert into job_titles (title) values
 ('author'),
 ('poet');
 
-select title, standarize_title(title) from job_titles;
+select title, standardize_title(title) from job_titles;

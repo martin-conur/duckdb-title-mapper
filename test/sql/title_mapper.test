@@ -4,37 +4,37 @@
 
 # Before we load the extension, this will fail
 statement error
-SELECT standarize_title('software engineer');
+SELECT standardize_title('software engineer');
 ----
-Catalog Error: Scalar Function with name standarize_title does not exist!
+Catalog Error: Scalar Function with name standardize_title does not exist!
 
 # Require statement will ensure the extension is loaded from now on
-require standarize_title
+require standardize_title
 
 require icu
 
 # Confirm the extension works
 query I
-SELECT standarize_title('robotics engineer');
+SELECT standardize_title('robotics engineer');
 ----
 Robotics Engineer - Engineers, All Other
 
 query I
-SELECT standarize_title('digital strategist');
+SELECT standardize_title('digital strategist');
 ----
 Data Strategist - Data Scientists
 
 query I
-SELECT standarize_title('poet');
+SELECT standardize_title('poet');
 ----
 Poet - Writers and Authors
 
 query I
-SELECT standarize_title('author');
+SELECT standardize_title('author');
 ----
 Author - Writers and Editors
 
 query I
-SELECT standarize_title('biologist');
+SELECT standardize_title('biologist');
 ----
 Biologist - Biological Scientists, All Other
