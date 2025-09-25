@@ -14,9 +14,9 @@ concurrency:
 jobs:
   duckdb-stable-build:
     name: Build extension binaries
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.3.2
+    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.4.0
     with:
-      duckdb_version: v1.3.2
+      duckdb_version: v1.4.0
       ci_tools_version: main
       extension_name: standardize_title
       extra_toolchains: rust;python3
@@ -56,8 +56,8 @@ jobs:
           echo "Building for version: $VERSION"
           mkdir -p "$VERSION"
           
-          # Get the DuckDB version used in the workflow (v1.3.2 from the workflow)
-          DUCKDB_VERSION="v1.3.2"
+          # Get the DuckDB version used in the workflow
+          DUCKDB_VERSION="v1.4.0"
           
           for artifact_dir in artifacts/*/; do
             if [ -d "$artifact_dir" ]; then
