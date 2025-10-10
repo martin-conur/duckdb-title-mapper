@@ -9,7 +9,7 @@ SELECT standardize_title('software engineer');
 Catalog Error: Scalar Function with name standardize_title does not exist!
 
 # Require statement will ensure the extension is loaded from now on
-require standardize_title
+require title_mapper
 
 require icu
 

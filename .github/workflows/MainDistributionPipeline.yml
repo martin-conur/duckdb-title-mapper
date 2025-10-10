@@ -18,7 +18,7 @@ jobs:
     with:
       duckdb_version: v1.4.1
       ci_tools_version: main
-      extension_name: standardize_title
+      extension_name: title_mapper
       extra_toolchains: rust;python3
       exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads;linux_amd64_musl;windows_amd64_mingw'
 
@@ -65,7 +65,7 @@ jobs:
               echo "Processing artifact: $artifact_name"
               
               # Extract architecture from artifact name (dynamically using the DuckDB version)
-              arch=$(echo "$artifact_name" | sed "s/standardize_title-${DUCKDB_VERSION}-extension-//")
+              arch=$(echo "$artifact_name" | sed "s/title_mapper-${DUCKDB_VERSION}-extension-//")
               
               # Create version/architecture directory
               mkdir -p "$VERSION/$arch"

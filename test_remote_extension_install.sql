@@ -2,8 +2,8 @@
 -- SET enable_http_logging=true;
 -- SET enable_object_cache=true;
 
-FORCE INSTALL standardize_title from 'https://raw.githubusercontent.com/martin-conur/duckdb-title-mapper/main/builds';
-LOAD standardize_title;
+FORCE INSTALL title_mapper from 'https://raw.githubusercontent.com/martin-conur/duckdb-title-mapper/main/builds';
+LOAD title_mapper;
 
 
 create table job_titles (title text);

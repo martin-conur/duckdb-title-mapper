@@ -1,4 +1,4 @@
-load 'build/debug/standardize_title.duckdb_extension';
+load 'build/debug/title_mapper.duckdb_extension';
 
 create table job_titles (title text);
 

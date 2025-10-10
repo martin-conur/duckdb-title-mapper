@@ -71,7 +71,7 @@ duckdb
 
 ```sql
 -- Load the extension
-LOAD 'build/debug/standardize_title.duckdb_extension';
+LOAD 'build/debug/title_mapper.duckdb_extension';
 
 -- Try it out with different job titles
 SELECT standardize_title('Senior Software Engineer');
@@ -155,7 +155,7 @@ Once the extension is built, you can load it into DuckDB as follows:
 
 2. Load the extension:
    ```sql
-   LOAD 'build/release/standardize_title.duckdb_extension';
+   LOAD 'build/release/title_mapper.duckdb_extension';
    ```
 
 3. Use the extension to standardize job titles:
@@ -382,7 +382,7 @@ duckdb
 ```
 
 ```sql
-LOAD 'build/release/standardize_title.duckdb_extension';
+LOAD 'build/release/title_mapper.duckdb_extension';
 
 -- Test with various job titles
 SELECT standardize_title('Software Developer III');
@@ -418,7 +418,7 @@ make debug
 make debug  # or make release
 
 # Check the file exists
-ls -la build/debug/standardize_title.duckdb_extension
+ls -la build/debug/title_mapper.duckdb_extension
 ```
 
 ### Build Failures
