@@ -22,13 +22,13 @@ crate-type = ["staticlib"]
 [dependencies]
 bincode = "1.3.3"
 dashmap = "6.1.0"
-duckdb = { version = "1.4.0", features = [
+duckdb = { version = "1.4.1", features = [
     "vscalar",
     "vscalar-arrow",
     "vtab-arrow"
 ] }
 duckdb-loadable-macros = "0.1.5"
-libduckdb-sys = { version = "1.4.0", features = ["loadable-extension"] }
+libduckdb-sys = { version = "1.4.1", features = ["loadable-extension"] }
 ndarray = "0.16.1"
 once_cell = "1.21.3"
 rayon = "1.10.0"

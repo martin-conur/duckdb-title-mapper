@@ -1,4 +1,4 @@
-.PHONY: clean clean_all
+.PHONY: clean clean_all set-version
 
 PROJ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -9,8 +9,8 @@ EXTENSION_NAME=standardize_title
 USE_UNSTABLE_C_API=1
 
 # Target DuckDB version
-TARGET_DUCKDB_VERSION=v1.4.0
-DUCKDB_TEST_VERSION=1.4.0 
+TARGET_DUCKDB_VERSION=v1.4.1
+DUCKDB_TEST_VERSION=1.4.1
 
 all: configure debug
 
@@ -29,3 +29,17 @@ test_release: test_extension_release
 
 clean: clean_build clean_rust
 clean_all: clean_configure clean
+
+# Version management helper
+set-version:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make set-version VERSION=v1.4.0"; \
+		echo ""; \
+		echo "This will update DuckDB version in:"; \
+		echo "  - Makefile"; \
+		echo "  - Cargo.toml"; \
+		echo "  - Cargo.lock"; \
+		echo "  - GitHub Actions workflow"; \
+		exit 1; \
+	fi
+	@bash scripts/set_duckdb_version.sh $(VERSION)
