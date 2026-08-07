@@ -16,7 +16,6 @@ use libduckdb_sys::{
     duckdb_string_t_length,
 };
 use duckdb::core::Inserter;
-use duckdb::ffi;
 use std::slice;
 struct StandarizeTitles;
 
@@ -44,7 +43,7 @@ fn process_strings(input_slice: &[duckdb_string_t]) -> Vec<String> {
 impl VScalar for StandarizeTitles {
     type State = ();
 
-    unsafe fn invoke(
+    fn invoke(
         _state: &Self::State,
         input: &mut DataChunkHandle,
         output: &mut dyn WritableVector,
@@ -52,7 +51,7 @@ impl VScalar for StandarizeTitles {
         // Extract the input word
         let input_vec = input.flat_vector(0);
         // slice of strings
-        let input_slice = input_vec.as_slice_with_len::<duckdb_string_t>(input.len());
+        let input_slice = unsafe { input_vec.as_slice_with_len::<duckdb_string_t>(input.len()) };
         // a flat writable vector
         let output_flat = output.flat_vector();
 
